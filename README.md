@@ -1,4 +1,4 @@
-# Lightweight Active Directore people fined
+# Lightweight Active Directore people finder
 
 Small project to write lightweight web service which you can deploy and run it with few clicks.
 With this service non anyone in your company(with respective permissions) will be able to search people profiles and make small reports.
