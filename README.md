@@ -1,4 +1,4 @@
-# Lightweight Active Directory people finder
+# "adbook" - Lightweight Active Directory people finder tool
 
 Small project to write lightweight web service which you can deploy and run it with few clicks.
 With this service anyone in your company(with respective permissions) will be able to search people profiles and make small reports.
