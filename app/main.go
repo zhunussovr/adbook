@@ -23,7 +23,7 @@ const (
 )
 
 type uData struct {
-	FullName, Email, Phone string
+	FullName, Title, Email, Phone string
 }
 
 // Employee to define structure of json
@@ -76,7 +76,7 @@ func list(conn *ldap.Conn) error {
 		0,
 		false,
 		filter("*"),
-		[]string{"dn", "sAMAccountName", "mail", "sn", "givenName", "telephoneNumber"},
+		[]string{"dn", "sAMAccountName", "mail", "sn", "displayName", "telephoneNumber", "title"},
 		nil,
 	))
 
@@ -90,7 +90,8 @@ func list(conn *ldap.Conn) error {
 			AccountName: entry.GetAttributeValue("sAMAccountName"),
 			UserData: []uData{
 				{
-					FullName: entry.GetAttributeValue("givenName"),
+					FullName: entry.GetAttributeValue("displayName"),
+					Title:    entry.GetAttributeValue("title"),
 					Email:    entry.GetAttributeValue("mail"),
 					Phone:    entry.GetAttributeValue("telephoneNumber"),
 				},
@@ -99,6 +100,8 @@ func list(conn *ldap.Conn) error {
 
 		file, _ := json.MarshalIndent(userlist, "", " ")
 		_ = ioutil.WriteFile("users.json", file, 0644)
+
+		fmt.Printf("%+v\n", userlist)
 	}
 
 	return nil
