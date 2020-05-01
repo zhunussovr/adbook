@@ -22,8 +22,14 @@ const (
 	loginPassword = "vagrant"
 )
 
+type uData struct {
+	FullName, Email, Phone string
+}
+
+// Employee to define structure of json
 type Employee struct {
-	FullName, AccountName, Email, Phone string
+	AccountName string
+	UserData    []uData
 }
 
 func main() {
@@ -79,21 +85,16 @@ func list(conn *ldap.Conn) error {
 	}
 
 	for _, entry := range result.Entries {
-		fmt.Printf(
-			"%s: %s %s -- %v -- %v -- %v\n",
-			entry.DN,
-			entry.GetAttributeValue("givenName"),
-			entry.GetAttributeValue("sn"),
-			entry.GetAttributeValue("sAMAccountName"),
-			entry.GetAttributeValue("mail"),
-			entry.GetAttributeValue("telephoneNumber"),
-		)
 
 		userlist := Employee{
-			FullName:    entry.GetAttributeValue("givenName"),
 			AccountName: entry.GetAttributeValue("sAMAccountName"),
-			Email:       entry.GetAttributeValue("mail"),
-			Phone:       entry.GetAttributeValue("telephoneNumber"),
+			UserData: []uData{
+				{
+					FullName: entry.GetAttributeValue("givenName"),
+					Email:    entry.GetAttributeValue("mail"),
+					Phone:    entry.GetAttributeValue("telephoneNumber"),
+				},
+			},
 		}
 
 		file, _ := json.MarshalIndent(userlist, "", " ")
