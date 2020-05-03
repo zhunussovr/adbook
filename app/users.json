@@ -1,11 +1,7 @@
 {
  "AccountName": "ricky.martin",
- "UserData": [
-  {
-   "FullName": "Ricky Martin",
-   "Title": "Junior Accauntant",
-   "Email": "ricky.marting@uplift.com",
-   "Phone": "+22222222222"
-  }
- ]
+ "FullName": "Ricky Martin",
+ "Title": "Junior Accauntant",
+ "Email": "ricky.marting@uplift.com",
+ "Phone": "+22222222222"
 }
