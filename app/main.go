@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strings"
 
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/ldap.v3"
 )
 
@@ -15,7 +19,7 @@ const (
 	ldapBind     = "vagrant@uplift.local"
 	ldapPassword = "vagrant"
 
-	filterDN = "(&(objectClass=person)(memberOf:1.2.840.113556.1.4.1941:=CN=stuff,OU=uGroups,OU=DEMO01,DC=uplift,DC=local)(|(sAMAccountName={username})(mail={username})))"
+	filterDN = "(&(objectClass=person)(memberOf:1.2.840.113556.1.4.1941:=CN=staff,OU=uGroups,OU=DEMO01,DC=uplift,DC=local)(|(sAMAccountName={username})(mail={username})))"
 	baseDN   = "OU=DEMO01,DC=uplift,DC=local"
 
 	loginUsername = "vagrant"
@@ -102,6 +106,34 @@ func list(conn *ldap.Conn) error {
 		_ = ioutil.WriteFile("users.json", file, 0644)
 
 		fmt.Printf("%+v\n", userlist)
+
+		// For using SCRAM-SHA-1 auth.mechanism
+		dbcreds := options.Credential{
+			Username: "adbookadm",
+			Password: "adbookadm",
+		}
+		clientOptions := options.Client().ApplyURI("mongodb://localhost/adbook").SetAuth(dbcreds)
+		client, err := mongo.Connect(context.TODO(), clientOptions)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = client.Ping(context.TODO(), nil)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("Connected to MongoDB!")
+
+		//database block - willb be moved later
+		collection := client.Database("adbook").Collection("userdata")
+		insertResult, err := collection.InsertOne(context.TODO(), userlist)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Inserted multiple documents: ", insertResult.InsertedID)
 	}
 
 	return nil
