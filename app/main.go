@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"strings"
 
@@ -41,7 +39,7 @@ func main() {
 
 	defer conn.Close()
 
-	if err := list(conn); err != nil {
+	if err := getldapusers(conn); err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
@@ -50,6 +48,9 @@ func main() {
 		fmt.Printf("%v", err)
 		return
 	}
+	// API block
+	//http.Handle("/users", usersHandler)
+	//log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func connect() (*ldap.Conn, error) {
@@ -66,7 +67,7 @@ func connect() (*ldap.Conn, error) {
 	return conn, nil
 }
 
-func list(conn *ldap.Conn) error {
+func getldapusers(conn *ldap.Conn) error {
 	result, err := conn.Search(ldap.NewSearchRequest(
 		baseDN,
 		ldap.ScopeWholeSubtree,
@@ -92,39 +93,8 @@ func list(conn *ldap.Conn) error {
 			Email:       entry.GetAttributeValue("mail"),
 			Phone:       entry.GetAttributeValue("telephoneNumber"),
 		}
-
-		file, _ := json.MarshalIndent(userlist, "", " ")
-		_ = ioutil.WriteFile("users.json", file, 0644)
-
 		fmt.Printf("%+v\n", userlist)
-
-		// For using SCRAM-SHA-1 auth.mechanism
-		dbcreds := options.Credential{
-			Username: "adbookadm",
-			Password: "adbookadm",
-		}
-		clientOptions := options.Client().ApplyURI("mongodb://localhost/adbook").SetAuth(dbcreds)
-		client, err := mongo.Connect(context.TODO(), clientOptions)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = client.Ping(context.TODO(), nil)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Println("Connected to MongoDB!")
-
-		//database block - willb be moved later
-		collection := client.Database("adbook").Collection("userdata")
-		insertResult, err := collection.InsertOne(context.TODO(), userlist)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Inserted multiple documents: ", insertResult.InsertedID)
+		saveUsers(userlist)
 	}
 
 	return nil
@@ -162,6 +132,36 @@ func auth(conn *ldap.Conn) error {
 	}
 
 	return nil
+}
+
+func saveUsers(user Employee) {
+	// For using SCRAM-SHA-1 auth.mechanism
+	dbcreds := options.Credential{
+		Username: "adbookadm",
+		Password: "adbookadm",
+	}
+	clientOptions := options.Client().ApplyURI("mongodb://localhost/adbook").SetAuth(dbcreds)
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = client.Ping(context.TODO(), nil)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Connected to MongoDB!")
+
+	//database block - willb be moved later
+	collection := client.Database("adbook").Collection("userdata")
+	insertResult, err := collection.InsertOne(context.TODO(), user)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Inserted multiple documents: ", insertResult.InsertedID)
 }
 
 func filter(needle string) string {
