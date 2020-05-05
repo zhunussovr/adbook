@@ -1,13 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"strings"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/ldap.v3"
 )
 
@@ -30,8 +26,11 @@ type Employee struct {
 }
 
 func main() {
-	conn, err := connect()
+	// Connection to database
+	ConnectDB()
 
+	// LDAP connection
+	conn, err := connect()
 	if err != nil {
 		fmt.Printf("Failed to connect. %s", err)
 		return
@@ -94,7 +93,6 @@ func getldapusers(conn *ldap.Conn) error {
 			Phone:       entry.GetAttributeValue("telephoneNumber"),
 		}
 		fmt.Printf("%+v\n", userlist)
-		saveUsers(userlist)
 	}
 
 	return nil
@@ -132,36 +130,6 @@ func auth(conn *ldap.Conn) error {
 	}
 
 	return nil
-}
-
-func saveUsers(user Employee) {
-	// For using SCRAM-SHA-1 auth.mechanism
-	dbcreds := options.Credential{
-		Username: "adbookadm",
-		Password: "adbookadm",
-	}
-	clientOptions := options.Client().ApplyURI("mongodb://localhost/adbook").SetAuth(dbcreds)
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = client.Ping(context.TODO(), nil)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Connected to MongoDB!")
-
-	//database block - willb be moved later
-	collection := client.Database("adbook").Collection("userdata")
-	insertResult, err := collection.InsertOne(context.TODO(), user)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Inserted multiple documents: ", insertResult.InsertedID)
 }
 
 func filter(needle string) string {
