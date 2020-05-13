@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/gofiber/fiber"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gopkg.in/ldap.v3"
 )
 
@@ -20,14 +26,61 @@ const (
 	loginPassword = "vagrant"
 )
 
+const dbName = "adbook"
+const collectionName = "userdata"
+const port = 8081
+
 // Employee to define structure of json
 type Employee struct {
-	AccountName, FullName, Title, Email, Phone string
+	AccountName string //`json:"accountname,omitempty" bson:"accountname,omitempty"`
+	FullName    string //`json:"fullname,omitempty" bson:"fullname,omitempty"`
+	Title       string //`json:"title,omitempty" bson:"title,omitempty"`
+	Email       string //`json:"email,omitempty" bson:"email,omitempty"`
+	Phone       string //`json:"phone,omitempty" bson:"phone,omitempty"`
+}
+
+var client *mongo.Client
+
+func getPerson(c *fiber.Ctx) {
+	collection, err := GetCollections(dbName, collectionName)
+	if err != nil {
+		c.Status(500).Send(err)
+		return
+	}
+
+	var filter bson.M = bson.M{}
+
+	if c.Params("id") != "" {
+		id := c.Params("id")
+		objID, _ := primitive.ObjectIDFromHex(id)
+		filter = bson.M{"_id": objID}
+	}
+
+	var results []bson.M
+	cur, err := collection.Find(context.Background(), filter)
+	defer cur.Close(context.Background())
+
+	if err != nil {
+		c.Status(500).Send(err)
+		return
+	}
+
+	cur.All(context.Background(), &results)
+
+	if results == nil {
+		c.SendStatus(404)
+		return
+	}
+
+	json, _ := json.Marshal(results)
+	c.Send(json)
 }
 
 func main() {
-	// Connection to database
-	ConnectDB()
+	app := fiber.New()
+
+	app.Get("/person/:id?", getPerson)
+	app.Listen(port)
 
 	// LDAP connection
 	conn, err := connect()
@@ -93,6 +146,12 @@ func getldapusers(conn *ldap.Conn) error {
 			Phone:       entry.GetAttributeValue("telephoneNumber"),
 		}
 		fmt.Printf("%+v\n", userlist)
+
+		//collection := client.Database("adbook").Collection("userdata")
+		//err := collection.InsertOne(context.TODO(), userlist)
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
 	}
 
 	return nil

@@ -10,7 +10,7 @@ import (
 )
 
 // ConnectDB function to verify database connectivity
-func ConnectDB() *mongo.Client {
+func ConnectDB() (*mongo.Client, error) {
 	// For using SCRAM-SHA-1 auth.mechanism
 	dbcreds := options.Credential{
 		Username: "adbookadm",
@@ -22,13 +22,25 @@ func ConnectDB() *mongo.Client {
 	// Ferify connections
 	err = client.Ping(context.TODO(), nil)
 	if err != nil {
-		fmt.Println("-------------------------------")
-		log.Fatal("Connection to database - FAILED", err)
-		fmt.Println("-------------------------------")
+		fmt.Println("Connection to database - FAILED:")
+		log.Fatal(err)
 	} else {
 		fmt.Println("-------------------------------")
 		fmt.Println("Connection to database - SUCCESS")
 		fmt.Println("-------------------------------")
 	}
-	return client
+	return client, nil
+}
+
+// GetCollections - to retrieve collections
+func GetCollections(DbName string, CollectionName string) (*mongo.Collection, error) {
+	client, err := ConnectDB()
+
+	if err != nil {
+		return nil, err
+	}
+
+	collection := client.Database(DbName).Collection(CollectionName)
+
+	return collection, nil
 }
