@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/gofiber/fiber"
 	"go.mongodb.org/mongo-driver/bson"
@@ -52,7 +53,20 @@ func getPerson(c *fiber.Ctx) {
 }
 
 func main() {
-	app := fiber.New()
-	app.Get("/person/:id?", getPerson)
-	app.Listen(port)
+	//app := fiber.New()
+	//app.Get("/person/:id?", getPerson)
+	//app.Listen(port)
+	// LDAP connection
+	conn, err := Connect()
+	if err != nil {
+		fmt.Printf("Failed to connect. %s", err)
+		return
+	}
+
+	defer conn.Close()
+
+	if err := GetLDAPUsers(conn); err != nil {
+		fmt.Printf("%v", err)
+		return
+	}
 }
