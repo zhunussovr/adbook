@@ -1,72 +1,43 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-
-	"github.com/gofiber/fiber"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"flag"
+	"io/ioutil"
+	"log"
 )
 
-const dbName = "adbook"
-const collectionName = "userdata"
-const port = 8081
-
-var client *mongo.Client
-
-func getPerson(c *fiber.Ctx) {
-	collection, err := GetCollections(dbName, collectionName)
-	if err != nil {
-		c.Status(500).Send(err)
-		return
-	}
-
-	var filter bson.M = bson.M{}
-
-	if c.Params("id") != "" {
-		id := c.Params("id")
-		objID, _ := primitive.ObjectIDFromHex(id)
-		filter = bson.M{"_id": objID}
-	}
-
-	var results []bson.M
-	cur, err := collection.Find(context.Background(), filter)
-	defer cur.Close(context.Background())
-
-	if err != nil {
-		c.Status(500).Send(err)
-		return
-	}
-
-	cur.All(context.Background(), &results)
-
-	if results == nil {
-		c.SendStatus(404)
-		return
-	}
-
-	json, _ := json.Marshal(results)
-	c.Send(json)
-}
+var (
+	conf = flag.String("conf", "config.yaml", "path to a configuration file")
+)
 
 func main() {
-	//app := fiber.New()
-	//app.Get("/person/:id?", getPerson)
-	//app.Listen(port)
-	// LDAP connection
-	conn, err := Connect()
+
+	flag.Parse()
+
+	configData, _ := ioutil.ReadFile(*conf)
+
+	log.Println("Parsing config ...")
+	config := ParseConfig(string(configData))
+
+	log.Println("Connecting to ldap ...")
+	ldap, err := NewLdap(config.ldapConfig)
 	if err != nil {
-		fmt.Printf("Failed to connect. %s", err)
-		return
+		log.Println(err)
 	}
 
-	defer conn.Close()
-
-	if err := GetLDAPUsers(conn); err != nil {
-		fmt.Printf("%v", err)
-		return
+	log.Println("Connecting to cache...")
+	cache, _ := NewCache(config.cacheConfig)
+	if err != nil {
+		log.Println(err)
 	}
+
+	srv, _ := NewApiServer(config.apiConfig, ldap, cache)
+	if err != nil {
+		log.Println(err)
+	}
+
+	srv.Routes()
+
+	log.Fatalln(srv.Run())
+
 }

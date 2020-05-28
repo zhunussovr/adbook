@@ -7,81 +7,89 @@ import (
 	"gopkg.in/ldap.v3"
 )
 
-const (
-	ldapServer = "192.168.15.5:389"
-	//ldapPort     = 389
-	ldapBind     = "vagrant@uplift.local"
-	ldapPassword = "vagrant"
-
-	filterDN = "(&(objectClass=person)(memberOf:1.2.840.113556.1.4.1941:=CN=staff,OU=uGroups,OU=DEMO01,DC=uplift,DC=local)(|(sAMAccountName={username})(mail={username})))"
-	baseDN   = "OU=DEMO01,DC=uplift,DC=local"
-
-	loginUsername = "vagrant"
-	loginPassword = "vagrant"
-)
-
-type Employee struct {
-	AccountName string `json:"accountname,omitempty" bson:"accountname,omitempty"`
-	FullName    string `json:"fullname,omitempty" bson:"fullname,omitempty"`
-	Title       string `json:"title,omitempty" bson:"title,omitempty"`
-	Email       string `json:"email,omitempty" bson:"email,omitempty"`
-	Phone       string `json:"phone,omitempty" bson:"phone,omitempty"`
+type Ldap struct {
+	conn   *ldap.Conn
+	config *LdapConfig
 }
 
-func Connect() (*ldap.Conn, error) {
-	conn, err := ldap.Dial("tcp", ldapServer)
+type LdapConfig struct {
+	LdapServer   string
+	LdapBind     string
+	LdapPassword string
+	FilterDN     string
+	BaseDN       string
+}
 
+func NewLdap(config *LdapConfig) (*Ldap, error) {
+	con, err := ConnectLdap(config)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect. %s", err)
+		return nil, err
 	}
 
-	if err := conn.Bind(ldapBind, ldapPassword); err != nil {
-		return nil, fmt.Errorf("Failed to bind. %s", err)
+	return &Ldap{con, config}, nil
+}
+
+func ConnectLdap(config *LdapConfig) (*ldap.Conn, error) {
+	conn, err := ldap.Dial("tcp", config.LdapServer)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to connect. %v", err)
+	}
+
+	if err := conn.Bind(config.LdapBind, config.LdapPassword); err != nil {
+		return nil, fmt.Errorf("Failed to bind. %v", err)
 	}
 
 	return conn, nil
 }
 
-func GetLDAPUsers(conn *ldap.Conn) error {
-	result, err := conn.Search(ldap.NewSearchRequest(
-		baseDN,
+func (l *Ldap) GetLDAPUsers(username string) ([]Employee, error) {
+	var userlist []Employee
+
+	result, err := l.conn.Search(ldap.NewSearchRequest(
+		l.config.BaseDN,
 		ldap.ScopeWholeSubtree,
 		ldap.NeverDerefAliases,
 		0,
 		0,
 		false,
-		Filter("*"),
+		l.Filter(username),
 		[]string{"dn", "sAMAccountName", "mail", "sn", "displayName", "telephoneNumber", "title"},
 		nil,
 	))
 
 	if err != nil {
-		return fmt.Errorf("Failed to search users. %s", err)
+		return nil, fmt.Errorf("Failed to search users. %v", err)
 	}
 
 	for _, entry := range result.Entries {
 
-		userlist := Employee{
+		user := Employee{
 			AccountName: entry.GetAttributeValue("sAMAccountName"),
 			FullName:    entry.GetAttributeValue("displayName"),
 			Title:       entry.GetAttributeValue("title"),
 			Email:       entry.GetAttributeValue("mail"),
 			Phone:       entry.GetAttributeValue("telephoneNumber"),
 		}
-		fmt.Printf("%+v\n", userlist)
+		userlist = append(userlist, user)
+
 	}
-	return nil
+
+	// debug
+	fmt.Printf("%+v\n", userlist)
+
+	return userlist, nil
 }
 
-func Auth(conn *ldap.Conn) error {
-	result, err := conn.Search(ldap.NewSearchRequest(
-		baseDN,
+func (l *Ldap) Auth(login, pass string) error {
+	result, err := l.conn.Search(ldap.NewSearchRequest(
+		l.config.BaseDN,
 		ldap.ScopeWholeSubtree,
 		ldap.NeverDerefAliases,
 		0,
 		0,
 		false,
-		Filter(loginUsername),
+		l.Filter(login),
 		[]string{"dn"},
 		nil,
 	))
@@ -98,7 +106,7 @@ func Auth(conn *ldap.Conn) error {
 		return fmt.Errorf("Too many entries returned")
 	}
 
-	if err := conn.Bind(result.Entries[0].DN, loginPassword); err != nil {
+	if err := l.conn.Bind(result.Entries[0].DN, pass); err != nil {
 		fmt.Printf("Failed to auth. %s", err)
 	} else {
 		fmt.Printf("Authenticated successfuly!")
@@ -107,9 +115,9 @@ func Auth(conn *ldap.Conn) error {
 	return nil
 }
 
-func Filter(needle string) string {
+func (l *Ldap) Filter(needle string) string {
 	res := strings.Replace(
-		filterDN,
+		l.config.FilterDN,
 		"{username}",
 		needle,
 		-1,
