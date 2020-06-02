@@ -7,7 +7,7 @@ type Config struct {
 }
 
 func ParseConfig(s string) *Config {
-	// TODO: make real parsing of incoming string
+	// TODO: make real parsing of input string
 	return &Config{
 		ldapConfig: &LdapConfig{
 			LdapServer:   "192.168.15.5:389",

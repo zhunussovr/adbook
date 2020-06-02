@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  <title>LDAP Book</title>
+</head>
+
+<body>
+  <div id="app" class="container">
+
+    <nav class="navbar navbar-expand-lg">
+      <a href="#" class="navbar-brand">LDAP Book</a>
+      <div>
+        <form class="form-inline my-2 my-lg-0">
+          <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" v-model="searchtext">
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit" @click="search">Search</button>
+        </form>
+      </div>
+    </nav>
+
+    <table class="table table-striped">
+      <thead> 
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+        </tr>
+      </thead>
+      
+      <tbody>
+        <tr v-for="entry in entries">
+          <td>{{ entry.Name }}</td>
+          <td>{{ entry.Phone }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        searchtext,
+        entries: [],
+        api: {
+          search: "/api/search/"
+        }
+      },
+      methods: {
+        search(){
+          axios.get(this.api.search + this.searchtext).then((response) => {
+            this.entries = response.data;
+          })
+        }
+      }
+    })
+  </script>
+</body>
+</html>

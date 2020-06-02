@@ -24,7 +24,9 @@ func NewApiServer(config *ApiConfig, ldap *Ldap, cache *Cache) (*ApiServer, erro
 }
 
 func (a *ApiServer) Routes() {
-	a.fibapp.Get("/person/:id?", a.getPerson)
+	a.fibapp.Static("/", "./web")
+	a.fibapp.Get("/api/search/:query", a.search)
+	a.fibapp.Get("/api/person/:id?", a.getPerson)
 }
 
 func (a *ApiServer) getPerson(c *fiber.Ctx) {
@@ -36,6 +38,29 @@ func (a *ApiServer) getPerson(c *fiber.Ctx) {
 
 	id := c.Params("id")
 	employees, err := a.ldap.GetLDAPUsers(id)
+	if err != nil {
+		c.SendStatus(500)
+		return
+	}
+
+	if employees == nil {
+		c.SendStatus(404)
+		return
+	}
+
+	json, _ := json.Marshal(employees)
+	c.Send(json)
+}
+
+func (a *ApiServer) search(c *fiber.Ctx) {
+
+	if c.Params("query") == "" {
+		c.SendStatus(500)
+		return
+	}
+
+	q := c.Params("query")
+	employees, err := a.ldap.GetLDAPUsers(q)
 	if err != nil {
 		c.SendStatus(500)
 		return
