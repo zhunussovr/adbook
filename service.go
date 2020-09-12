@@ -3,6 +3,7 @@ package adbook
 import (
 	"github.com/zhunussovr/adbook/backend"
 	"github.com/zhunussovr/adbook/model"
+	"golang.org/x/sync/errgroup"
 )
 
 type BookService struct {
@@ -25,6 +26,24 @@ func (b *BookService) Set(model.Person) error {
 }
 
 func (b *BookService) Search(search string) ([]model.Person, error) {
-	// TODO: Implement
-	return nil
+	var persons []model.Person
+	var personsCh chan []model.Person
+	g := new(errgroup.Group)
+
+	for _, backend := range b.Backends {
+		g.Go(func() error {
+			persons, err := backend.Search(search)
+			if err != nil {
+				return err
+			}
+			personsCh <- persons
+			return nil
+		})
+	}
+
+	for range b.Backends {
+		persons = append(persons, <-personsCh...)
+	}
+
+	return persons, nil
 }

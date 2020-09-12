@@ -59,18 +59,18 @@ func (a *ApiServer) search(c *fiber.Ctx) {
 	}
 
 	q := c.Params("query")
-	employees, err := a.book.Get(q)
+	persons, err := a.book.Search(q)
 	if err != nil {
 		c.SendStatus(500)
 		return
 	}
 
-	if employees == nil {
+	if persons == nil {
 		c.SendStatus(404)
 		return
 	}
 
-	json, _ := json.Marshal(employees)
+	json, _ := json.Marshal(persons)
 	c.Send(json)
 }
 
