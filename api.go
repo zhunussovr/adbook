@@ -53,13 +53,14 @@ func (a *ApiServer) getPerson(c *fiber.Ctx) {
 
 func (a *ApiServer) search(c *fiber.Ctx) {
 
-	if c.Params("query") == "" {
+	if c.Params("query") == "" || c.Params("backend") == "" {
 		c.SendStatus(500)
 		return
 	}
 
 	q := c.Params("query")
-	persons, err := a.book.Search(q)
+	b := c.Params("backend")
+	persons, err := a.book.Search(q, b)
 	if err != nil {
 		c.SendStatus(500)
 		return

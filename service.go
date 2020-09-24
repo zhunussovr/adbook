@@ -1,17 +1,18 @@
 package adbook
 
 import (
+	"fmt"
+
 	"github.com/zhunussovr/adbook/backend"
 	"github.com/zhunussovr/adbook/model"
-	"golang.org/x/sync/errgroup"
 )
 
 type BookService struct {
 	Backends map[string]backend.Interface
 }
 
-func NewBookService() *BookService {
-	return &BookService{make(map[string]backend.Interface)}
+func NewBookService(backends map[string]backend.Interface) *BookService {
+	return &BookService{backends}
 }
 
 func (b *BookService) Get(search string) ([]model.Person, error) {
@@ -25,24 +26,17 @@ func (b *BookService) Set(model.Person) error {
 	return nil
 }
 
-func (b *BookService) Search(search string) ([]model.Person, error) {
+func (b *BookService) Search(search, backendName string) ([]model.Person, error) {
 	var persons []model.Person
-	var personsCh chan []model.Person
-	g := new(errgroup.Group)
 
-	for _, backend := range b.Backends {
-		g.Go(func() error {
-			persons, err := backend.Search(search)
-			if err != nil {
-				return err
-			}
-			personsCh <- persons
-			return nil
-		})
+	backend, ok := b.Backends[backendName]
+	if !ok {
+		return nil, fmt.Errorf("no backend found with the name: %s", backendName)
 	}
 
-	for range b.Backends {
-		persons = append(persons, <-personsCh...)
+	persons, err := backend.Search(search)
+	if err != nil {
+		return nil, err
 	}
 
 	return persons, nil
