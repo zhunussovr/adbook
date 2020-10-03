@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  ldap:
+    image: osixia/openldap:latest
+    volumes:
+    - .:/container/service/slapd/assets/config/bootstrap/ldif/custom
+  phonebook:
+    build: .

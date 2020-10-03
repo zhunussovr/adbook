@@ -1,26 +1,28 @@
-package main
+package ldap
 
 import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/ldap.v3"
+	"github.com/go-ldap/ldap/v3"
+	"github.com/zhunussovr/adbook/model"
 )
 
 type Ldap struct {
 	conn   *ldap.Conn
-	config *LdapConfig
+	config Config
 }
 
-type LdapConfig struct {
-	LdapServer   string
-	LdapBind     string
-	LdapPassword string
-	FilterDN     string
-	BaseDN       string
+type Config struct {
+	Name     string
+	Server   string
+	Bind     string
+	Password string
+	FilterDN string
+	BaseDN   string
 }
 
-func NewLdap(config *LdapConfig) (*Ldap, error) {
+func New(config Config) (*Ldap, error) {
 	con, err := ConnectLdap(config)
 	if err != nil {
 		return nil, err
@@ -29,22 +31,22 @@ func NewLdap(config *LdapConfig) (*Ldap, error) {
 	return &Ldap{con, config}, nil
 }
 
-func ConnectLdap(config *LdapConfig) (*ldap.Conn, error) {
-	conn, err := ldap.Dial("tcp", config.LdapServer)
+func ConnectLdap(config Config) (*ldap.Conn, error) {
+	conn, err := ldap.Dial("tcp", config.Server)
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect. %v", err)
 	}
 
-	if err := conn.Bind(config.LdapBind, config.LdapPassword); err != nil {
+	if err := conn.Bind(config.Bind, config.Password); err != nil {
 		return nil, fmt.Errorf("Failed to bind. %v", err)
 	}
 
 	return conn, nil
 }
 
-func (l *Ldap) GetLDAPUsers(username string) ([]Employee, error) {
-	var userlist []Employee
+func (l *Ldap) GetLDAPUsers(search string) ([]model.Person, error) {
+	var persons []model.Person
 
 	result, err := l.conn.Search(ldap.NewSearchRequest(
 		l.config.BaseDN,
@@ -53,8 +55,8 @@ func (l *Ldap) GetLDAPUsers(username string) ([]Employee, error) {
 		0,
 		0,
 		false,
-		l.Filter(username),
-		[]string{"dn", "sAMAccountName", "mail", "sn", "displayName", "telephoneNumber", "title"},
+		l.Filter(search),
+		[]string{"dn", "sAMAccountName", "mail", "sn", "givenName", "displayName", "telephoneNumber", "title"},
 		nil,
 	))
 
@@ -64,21 +66,23 @@ func (l *Ldap) GetLDAPUsers(username string) ([]Employee, error) {
 
 	for _, entry := range result.Entries {
 
-		user := Employee{
-			AccountName: entry.GetAttributeValue("sAMAccountName"),
-			FullName:    entry.GetAttributeValue("displayName"),
-			Title:       entry.GetAttributeValue("title"),
-			Email:       entry.GetAttributeValue("mail"),
-			Phone:       entry.GetAttributeValue("telephoneNumber"),
+		user := model.Person{
+			ID:        entry.GetAttributeValue("sAMAccountName"),
+			FullName:  entry.GetAttributeValue("displayName"),
+			FirstName: entry.GetAttributeValue("givenName"),
+			LastName:  entry.GetAttributeValue("sn"),
+			Title:     entry.GetAttributeValue("title"),
+			Email:     entry.GetAttributeValue("mail"),
+			Phone:     entry.GetAttributeValue("telephoneNumber"),
 		}
-		userlist = append(userlist, user)
+		persons = append(persons, user)
 
 	}
 
 	// debug
-	fmt.Printf("%+v\n", userlist)
+	fmt.Printf("%+v\n", persons)
 
-	return userlist, nil
+	return persons, nil
 }
 
 func (l *Ldap) Auth(login, pass string) error {

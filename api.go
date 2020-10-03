@@ -1,4 +1,4 @@
-package main
+package adbook
 
 import (
 	"encoding/json"
@@ -8,19 +8,18 @@ import (
 )
 
 type ApiServer struct {
-	config *ApiConfig
+	book   *BookService
+	config ApiConfig
 	fibapp *fiber.App
-	ldap   *Ldap
-	cache  *Cache
 }
 
 type ApiConfig struct {
 	ListenAddress string
 }
 
-func NewApiServer(config *ApiConfig, ldap *Ldap, cache *Cache) (*ApiServer, error) {
+func NewApiServer(config ApiConfig, b *BookService) (*ApiServer, error) {
 	app := fiber.New()
-	return &ApiServer{config: config, fibapp: app, ldap: ldap, cache: cache}, nil
+	return &ApiServer{config: config, fibapp: app, book: b}, nil
 }
 
 func (a *ApiServer) Routes() {
@@ -37,7 +36,7 @@ func (a *ApiServer) getPerson(c *fiber.Ctx) {
 	}
 
 	id := c.Params("id")
-	employees, err := a.ldap.GetLDAPUsers(id)
+	employees, err := a.book.Get(id)
 	if err != nil {
 		c.SendStatus(500)
 		return
@@ -54,24 +53,25 @@ func (a *ApiServer) getPerson(c *fiber.Ctx) {
 
 func (a *ApiServer) search(c *fiber.Ctx) {
 
-	if c.Params("query") == "" {
+	if c.Params("query") == "" || c.Params("backend") == "" {
 		c.SendStatus(500)
 		return
 	}
 
 	q := c.Params("query")
-	employees, err := a.ldap.GetLDAPUsers(q)
+	b := c.Params("backend")
+	persons, err := a.book.Search(q, b)
 	if err != nil {
 		c.SendStatus(500)
 		return
 	}
 
-	if employees == nil {
+	if persons == nil {
 		c.SendStatus(404)
 		return
 	}
 
-	json, _ := json.Marshal(employees)
+	json, _ := json.Marshal(persons)
 	c.Send(json)
 }
 
