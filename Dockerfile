@@ -19,6 +19,7 @@ FROM alpine
 RUN apk update && apk add --no-cache ca-certificates
 
 COPY --from=builder /go/bin/app /go/bin/app
+COPY --from=builder /go/src/app/config.toml /go/bin/
 COPY --from=builder /go/src/app/web /go/bin/web/
 
 WORKDIR /go/bin

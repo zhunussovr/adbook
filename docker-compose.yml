@@ -1,8 +1,12 @@
 version: '3.8'
 services:
-  ldap:
-    image: osixia/openldap:latest
+  openldap:
+    image: osixia/openldap:1.4.0
+    ports:
+      - "389:389"
+      - "636:636"
     volumes:
-    - .:/container/service/slapd/assets/config/bootstrap/ldif/custom
+      - "./ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom"
+    command: --copy-service --loglevel debug
   phonebook:
     build: .

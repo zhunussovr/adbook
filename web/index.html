@@ -26,15 +26,15 @@
     <table class="table table-striped">
       <thead> 
         <tr>
-          <th>Name</th>
-          <th>Phone</th>
+          <th>ID</th>
+          <th>Email</th>
         </tr>
       </thead>
       
       <tbody>
         <tr v-for="entry in entries">
-          <td>{{ entry.Name }}</td>
-          <td>{{ entry.Phone }}</td>
+          <td>{{ entry.ID }}</td>
+          <td>{{ entry.Email }}</td>
         </tr>
       </tbody>
     </table>
@@ -45,14 +45,21 @@
       el: '#app',
       data: {
         searchtext,
+        searchbackend: "OpenLDAP01",
         entries: [],
         api: {
-          search: "/api/search/"
+          search: "/api/search"
         }
       },
       methods: {
         search(){
-          axios.get(this.api.search + this.searchtext).then((response) => {
+          axios.get(this.api.search, {
+            params: {
+              q: this.searchtext,
+              b: this.searchbackend
+            }
+          })
+          .then((response) => {
             this.entries = response.data;
           })
         }
