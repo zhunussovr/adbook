@@ -1,0 +1,1 @@
+GET http://localhost:8080/api/search?query=billy&backend=OpenLDAP01 HTTP/1.1

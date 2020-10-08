@@ -35,17 +35,17 @@ func ConnectLdap(config Config) (*ldap.Conn, error) {
 	conn, err := ldap.Dial("tcp", config.Server)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect. %v", err)
+		return nil, fmt.Errorf("failed to connect. %v", err)
 	}
 
 	if err := conn.Bind(config.Bind, config.Password); err != nil {
-		return nil, fmt.Errorf("Failed to bind. %v", err)
+		return nil, fmt.Errorf("failed to bind. %v", err)
 	}
 
 	return conn, nil
 }
 
-func (l *Ldap) GetLDAPUsers(search string) ([]model.Person, error) {
+func (l *Ldap) Search(search string) ([]model.Person, error) {
 	var persons []model.Person
 
 	result, err := l.conn.Search(ldap.NewSearchRequest(
@@ -56,7 +56,7 @@ func (l *Ldap) GetLDAPUsers(search string) ([]model.Person, error) {
 		0,
 		false,
 		l.Filter(search),
-		[]string{"dn", "sAMAccountName", "mail", "sn", "givenName", "displayName", "telephoneNumber", "title"},
+		[]string{"uid", "cn", "mail", "sn"},
 		nil,
 	))
 
@@ -67,13 +67,11 @@ func (l *Ldap) GetLDAPUsers(search string) ([]model.Person, error) {
 	for _, entry := range result.Entries {
 
 		user := model.Person{
-			ID:        entry.GetAttributeValue("sAMAccountName"),
-			FullName:  entry.GetAttributeValue("displayName"),
-			FirstName: entry.GetAttributeValue("givenName"),
-			LastName:  entry.GetAttributeValue("sn"),
-			Title:     entry.GetAttributeValue("title"),
-			Email:     entry.GetAttributeValue("mail"),
-			Phone:     entry.GetAttributeValue("telephoneNumber"),
+			ID:       entry.GetAttributeValue("uid"),
+			FullName: entry.GetAttributeValue("cn"),
+			LastName: entry.GetAttributeValue("sn"),
+			Email:    entry.GetAttributeValue("mail"),
+			// Phone:     entry.GetAttributeValue("telephoneNumber"),
 		}
 		persons = append(persons, user)
 
