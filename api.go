@@ -24,7 +24,7 @@ func NewApiServer(config ApiConfig, b *BookService) (*ApiServer, error) {
 
 func (a *ApiServer) Routes() {
 	a.fibapp.Static("/", "./web")
-	a.fibapp.Get("/api/search/:query", a.search)
+	a.fibapp.Get("/api/search", a.search)
 	a.fibapp.Get("/api/person/:id?", a.getPerson)
 }
 
@@ -52,16 +52,12 @@ func (a *ApiServer) getPerson(c *fiber.Ctx) {
 }
 
 func (a *ApiServer) search(c *fiber.Ctx) {
-
-	if c.Params("query") == "" || c.Params("backend") == "" {
-		c.SendStatus(500)
-		return
-	}
-
-	q := c.Params("query")
-	b := c.Params("backend")
+	q := c.Query("query")
+	b := c.Query("backend")
+	log.Printf("parsing query and backend: %v %v", q, b)
 	persons, err := a.book.Search(q, b)
 	if err != nil {
+		log.Printf("error parsing: %v", err)
 		c.SendStatus(500)
 		return
 	}
