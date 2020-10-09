@@ -4,5 +4,5 @@ cn: John Smith
 sn: Smith
 uid: smithj
 mail: smithj@example.org
-# phoneNumber: +999 888 777 555
+telephoneNumber: +999 888 777 555
 objectClass: inetOrgPerson
