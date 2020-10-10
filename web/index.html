@@ -16,9 +16,9 @@
     <nav class="navbar navbar-expand-lg">
       <a href="#" class="navbar-brand">LDAP Book</a>
       <div>
-        <form class="form-inline my-2 my-lg-0">
+        <form class="form-inline my-2 my-lg-0" @submit.prevent>
           <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" v-model="searchtext">
-          <button class="btn btn-outline-success my-2 my-sm-0" type="button" @click="search">Search</button>
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit" @click="search">Search</button>
         </form>
       </div>
     </nav>
@@ -26,15 +26,15 @@
     <table class="table table-striped">
       <thead> 
         <tr>
-          <th>ID</th>
-          <th>Email</th>
+          <th>Name</th>
+          <th>Phone</th>
         </tr>
       </thead>
       
       <tbody>
         <tr v-for="entry in entries">
-          <td>{{ entry.accountname }}</td>
-          <td>{{ entry.email }}</td>
+          <td>{{ entry.fullname }}</td>
+          <td>{{ entry.phone }}</td>
         </tr>
       </tbody>
     </table>

@@ -56,7 +56,7 @@ func (l *Ldap) Search(search string) ([]model.Person, error) {
 		0,
 		false,
 		l.Filter(search),
-		[]string{"uid", "cn", "mail", "sn"},
+		[]string{"uid", "cn", "mail", "sn", "telephoneNumber"},
 		nil,
 	))
 
@@ -71,7 +71,7 @@ func (l *Ldap) Search(search string) ([]model.Person, error) {
 			FullName: entry.GetAttributeValue("cn"),
 			LastName: entry.GetAttributeValue("sn"),
 			Email:    entry.GetAttributeValue("mail"),
-			// Phone:     entry.GetAttributeValue("telephoneNumber"),
+			Phone:    entry.GetAttributeValue("telephoneNumber"),
 		}
 		persons = append(persons, user)
 
