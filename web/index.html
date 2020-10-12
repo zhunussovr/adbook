@@ -6,24 +6,41 @@
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-  <title>LDAP Book</title>
+  <title>People finder</title>
 </head>
 
 <body>
   <div id="app" class="container">
 
-    <nav class="navbar navbar-expand-lg">
-      <a href="#" class="navbar-brand">LDAP Book</a>
-      <div>
-        <form class="form-inline my-2 my-lg-0" @submit.prevent>
-          <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" v-model="searchtext">
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit" @click="search">Search</button>
-        </form>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+      <div class="d-flex flex-grow-1">
+          <a href="/" class="navbar-brand">People finder</a>
+          <form class="mr-2 my-auto w-100 d-inline-block order-1">
+              <div class="input-group" @submit.prevent>
+                  <input type="text" class="form-control border border-right-0" placeholder="Start typing name..." v-model="searchtext">
+                  <span class="input-group-append">
+                      <button class="btn btn-outline-light border border-left-0" type="button" @click="search">
+                          <i class="fa fa-search"></i>
+                      </button>
+                  </span>
+              </div>
+          </form>
+      </div>
+      <button class="navbar-toggler order-0" type="button" data-toggle="collapse" data-target="#navbar7">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="navbar-collapse collapse flex-shrink-1 flex-grow-0 order-last" id="navbar7">
+          <ul class="navbar-nav">
+              <li class="nav-item">
+                  <a class="nav-link" href="#">Me</a>
+              </li>
+          </ul>
       </div>
     </nav>
 
-    <table class="table table-striped">
+    <table class="table table-striped" v-if="showresultstable">
       <thead> 
         <tr>
           <th>Name</th>
@@ -44,6 +61,7 @@
     var app = new Vue({
       el: '#app',
       data: {
+        showresultstable: false,
         searchtext: "",
         searchbackend: "OpenLDAP01",
         entries: [],
@@ -61,6 +79,7 @@
           })
           .then((response) => {
             this.entries = response.data;
+            this.showresultstable = true;
           })
         }
       }
