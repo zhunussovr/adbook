@@ -7,7 +7,9 @@ services:
       - "636:636"
     volumes:
       - "./ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom"
-    command: --copy-service --loglevel debug
+    environment:
+      LDAP_COPY_SERVICE: "yes"
+      LDAP_LOG_LEVEL: "debug"
   phonebook:
     build: .
     depends_on:
