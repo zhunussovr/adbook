@@ -8,19 +8,16 @@ WORKDIR /go/src/app
 
 COPY . .
 
-RUN go get -d -v
-
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /go/bin/app ./cmd/adbook/main.go
+RUN go get -d -v && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /go/bin/app ./cmd/adbook/main.go
 
 ### Image Build stage
 
 FROM alpine:3.13
 
-RUN adduser -D localUser1 \
-    && apk update \
-    && apk add --no-cache ca-certificates \
-    && chown -R localUser1:localUser1 /go/bin
-
+RUN apk update && \
+    adduser -D -g '' localUser1 && \
+    addgroup localUser1 wheel \
 USER localUser1
 
 WORKDIR /go/bin
