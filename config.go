@@ -13,11 +13,11 @@ func ParseConfig(s string) Config {
 		LdapConfigs: []ldap.Config{
 			ldap.Config{
 				Name:     "OpenLDAP01",
-				Server:   "localhost:389",
-				Bind:     "cn=admin,dc=example,dc=org",
+				Server:   "openldap:389",
+				Bind:     "cn=admin,dc=example,dc=com",
 				Password: "admin",
 				FilterDN: "(&(objectClass=inetOrgPerson)(|(uid=*{username}*)(mail=*{username}*)))",
-				BaseDN:   "dc=example,dc=org",
+				BaseDN:   "dc=example,dc=com",
 			},
 		},
 		APIConfig: ApiConfig{

@@ -1,18 +1,48 @@
 version: '3.8'
+
 services:
   openldap:
-    image: osixia/openldap:1.4.0
+    build:
+      context: .
+      dockerfile: Dockerfile.ldap
+    container_name: adbook-openldap
     ports:
       - "389:389"
       - "636:636"
     volumes:
-      - "./ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom"
+      # - "./ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro"
+      - "ldap-data:/var/lib/ldap"
+      - "ldap-config:/etc/ldap/slapd.d"
     environment:
+      LDAP_ORGANISATION: "Example Company"
+      LDAP_DOMAIN: "example.com"
+      LDAP_ADMIN_PASSWORD: "admin"
       LDAP_COPY_SERVICE: "yes"
-      LDAP_LOG_LEVEL: "debug"
-  phonebook:
+      LDAP_LOG_LEVEL: "256"
+    networks:
+      - adbook-network
+
+  adbook:
     build: .
+    container_name: adbook-app
     depends_on:
-      - "openldap"
+      - openldap
     ports:
       - "8080:8080"
+    environment:
+      LDAP_HOST: "openldap"
+      LDAP_PORT: "389"
+      LDAP_BASE_DN: "dc=example,dc=com"
+      LDAP_BIND_DN: "cn=admin,dc=example,dc=com"
+      LDAP_BIND_PASSWORD: "admin"
+    networks:
+      - adbook-network
+    restart: unless-stopped
+
+volumes:
+  ldap-data:
+  ldap-config:
+
+networks:
+  adbook-network:
+    driver: bridge

@@ -1,8 +1,0 @@
-# User smithj
-dn: uid=smithj,dc=example,dc=org
-cn: John Smith
-sn: Smith
-uid: smithj
-mail: smithj@example.org
-telephoneNumber: +999 888 777 555
-objectClass: inetOrgPerson

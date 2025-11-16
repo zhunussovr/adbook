@@ -1,0 +1,19 @@
+dn: ou=people,dc=example,dc=com
+objectClass: organizationalUnit
+ou: people
+
+dn: cn=Alice Smith,ou=people,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Alice Smith
+sn: Smith
+givenName: Alice
+mail: alice@example.com
+telephoneNumber: 555-0001
+
+dn: cn=Bob Jones,ou=people,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Bob Jones
+sn: Jones
+givenName: Bob
+mail: bob@example.com
+telephoneNumber: 555-0002

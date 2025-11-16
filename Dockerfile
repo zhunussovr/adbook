@@ -1,33 +1,46 @@
 ### Go Build stage
+FROM golang:1.23-alpine AS builder
 
-FROM golang:1.16.4-alpine3.13 AS builder
-
-RUN apk update && apk add --no-cache git
+RUN apk update && apk add --no-cache git ca-certificates
 
 WORKDIR /go/src/app
 
+# Copy dependency files
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
 COPY . .
 
-RUN go get -d -v && \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /go/bin/app ./cmd/adbook/main.go
+# Build the binary
+ARG BINARY_NAME=app
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/${BINARY_NAME} ./cmd/adbook/main.go
 
 ### Image Build stage
+FROM alpine:3.20
 
-FROM alpine:3.13
-
+# Install dependencies and create user
 RUN apk update && \
-    adduser -D -g '' localUser1 && \
-    addgroup localUser1 wheel \
-USER localUser1
+    apk add --no-cache wget ca-certificates && \
+    adduser -D -g '' localuser && \
+    addgroup localuser wheel
 
-WORKDIR /go/bin
+# Set up working directory
+WORKDIR /app
 
-COPY --from=builder /go/bin/app .
-COPY --from=builder /go/src/app/config.toml .
-COPY --from=builder /go/src/app/web web/
+# Copy binary and config files
+ARG BINARY_NAME=app
+COPY --from=builder /go/bin/${BINARY_NAME} ./app
+COPY --from=builder /go/src/app/config.toml ./
+COPY --from=builder /go/src/app/web ./web/
 
-EXPOSE 8080/tcp
+# Change ownership to non-root user
+RUN chown -R localuser:localuser /app
 
-HEALTHCHECK CMD wget -q -O /dev/null http://localhost:8080/health || exit 1
+# Switch to non-root user
+USER localuser
 
-ENTRYPOINT ["./app"]
+EXPOSE 8080
+
+# Run the application
+CMD ["./app"]

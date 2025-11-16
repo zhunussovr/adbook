@@ -1,0 +1,4 @@
+FROM osixia/openldap:1.5.0
+
+# Copy LDIF files into the image, to avoid permission issue on hosting machine
+COPY ./ldif/*.ldif /container/service/slapd/assets/config/bootstrap/ldif/custom/

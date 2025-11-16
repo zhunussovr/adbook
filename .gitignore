@@ -1,0 +1,82 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+app
+adbook
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Go workspace file
+go.work
+
+# Dependency directories
+vendor/
+
+# Go build cache
+.cache/
+
+# IDEs and Editors
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# LDAP data (if you want to keep volumes out of git)
+ldap-data/
+ldap-config/
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+*.secret
+
+# Config files with sensitive data (if needed)
+config.local.toml
+config.prod.toml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+dist/
+build/
+bin/
+
+# Logs
+logs/
+*.log
+
+# LDIF backup files (if you generate them)
+*.ldif.backup
+ldif.backup/
+
+# Test coverage
+profile.out
+
+# Air (live reload tool) temp files
+tmp/
+
+# Delve debugger
+__debug_bin
